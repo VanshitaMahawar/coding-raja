@@ -1,0 +1,107 @@
+import json
+import datetime
+
+class Task:
+    def _init_(self, description, priority, due_date=None, completed=False):
+        self.description = description
+        self.priority = priority
+        self.due_date = due_date
+        self.completed = completed
+
+    def _repr_(self):
+        return f"{self.description} (Priority: {self.priority}, Due: {self.due_date}, Completed: {self.completed})"
+
+class TodoList:
+    def _init_(self):
+        self.tasks = []
+
+    def add_task(self, task):
+        self.tasks.append(task)
+
+    def remove_task(self, index):
+        try:
+            del self.tasks[index]
+        except IndexError:
+            print("Invalid task number. Please try again.")
+
+    def mark_completed(self, index):
+        try:
+            self.tasks[index].completed = True
+        except IndexError:
+            print("Invalid task number. Please try again.")
+
+    def list_tasks(self):
+        for index, task in enumerate(self.tasks):
+            print(f"{index + 1}. {task}")
+
+    def save_to_file(self, filename):
+        with open(filename, 'w') as f:
+            json.dump([task._dict_ for task in self.tasks], f)
+
+    def load_from_file(self, filename):
+        try:
+            with open(filename, 'r') as f:
+                data = json.load(f)
+                self.tasks = [Task(**task) for task in data]
+        except FileNotFoundError:
+            print("File not found.")
+
+def main():
+    todo_list = TodoList()
+    todo_list.load_from_file("tasks.json")
+
+    while True:
+        print("\nTODO LIST")
+        print("1. Add Task")
+        print("2. Remove Task")
+        print("3. Mark Task as Completed")
+        print("4. List Tasks")
+        print("5. Save and Quit")
+
+        choice = input("Enter your choice: ")
+
+        if choice == "1":
+            description = input("Enter task description: ")
+            priority = input("Enter task priority (high/medium/low): ")
+            due_date_str = input("Enter due date (YYYY-MM-DD) (optional): ")
+            if due_date_str:
+                try:
+                    due_date = datetime.datetime.strptime(due_date_str, "%Y-%m-%d").date()
+                except ValueError:
+                    print("Invalid date format. Please enter date in YYYY-MM-DD format.")
+                    continue
+            else:
+                due_date = None
+            todo_list.add_task(Task(description, priority, due_date))
+
+        elif choice == "2":
+            todo_list.list_tasks()
+            index = input("Enter task number to remove: ")
+            if index.isdigit():
+                index = int(index) - 1
+                todo_list.remove_task(index)
+            else:
+                print("Invalid input. Please enter a number.")
+
+        elif choice == "3":
+            todo_list.list_tasks()
+            index = input("Enter task number to mark as completed: ")
+            if index.isdigit():
+                index = int(index) - 1
+                todo_list.mark_completed(index)
+            else:
+                print("Invalid input. Please enter a number.")
+
+        elif choice == "4":
+            todo_list.list_tasks()
+
+        elif choice == "5":
+            todo_list.save_to_file("tasks.json")
+            print("Tasks saved. Exiting...")
+            break
+
+        else:
+            print("Invalid choice. Please try again.")
+
+if _name_ == "_main_":
+    main()
